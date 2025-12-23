@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "880617975664",
+    "project_id": "kamkaj-e472d",
+    "storage_bucket": "kamkaj-e472d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:880617975664:android:e0b8a0e68b447e9377a9b5",
+        "android_client_info": {
+          "package_name": "com.example.kamkaj_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "880617975664-cspcv8t48r84nlel2cgchrfm71n46gmt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.kamkaj_app",
+            "certificate_hash": "f99ec87275b45feeb3f012f335cf5fb5bd59a06f"
+          }
+        },
+        {
+          "client_id": "880617975664-8h1osbnj2m942pfr90bd46fh4kb0kmog.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAUvMOMt30msq91BYvXj9YYSAxbuektQmQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "880617975664-8h1osbnj2m942pfr90bd46fh4kb0kmog.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
