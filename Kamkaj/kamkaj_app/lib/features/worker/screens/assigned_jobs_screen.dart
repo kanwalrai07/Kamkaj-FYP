@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/colors.dart';
+import 'job_detail_screen.dart';
 
 class AssignedJobsScreen extends StatelessWidget {
   const AssignedJobsScreen({super.key});
@@ -7,17 +8,19 @@ class AssignedJobsScreen extends StatelessWidget {
   final List<Map<String, dynamic>> _assignedJobs = const [
     {
       'title': 'AC Service',
-      'address': 'DHA Phase 6, Lahore',
-      'budget': 'Rs. 2500',
+      'location': 'DHA Phase 6, Lahore',
+      'budget': 2500,
       'category': 'Electrician',
-      'status': 'In Progress'
+      'status': 'In Progress',
+      'description': 'AC needs full service and gas refill.'
     },
     {
       'title': 'Leaking Pipe Fix',
-      'address': 'Bahria Town, Lahore',
-      'budget': 'Rs. 1500',
+      'location': 'Bahria Town, Lahore',
+      'budget': 1500,
       'category': 'Plumber',
-      'status': 'Pending'
+      'status': 'Pending',
+      'description': 'Kitchen sink pipe is leaking water.'
     },
   ];
 
@@ -48,13 +51,18 @@ class AssignedJobsScreen extends StatelessWidget {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(job['address']),
+                  Text(job['location']),
                   Text(job['status'], style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                 ],
               ),
-              trailing: Text(job['budget'], style: const TextStyle(fontWeight: FontWeight.bold)),
+              trailing: Text("Rs. ${job['budget']}", style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () {
-                // Navigate to tracking or details
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => JobDetailScreen(job: job),
+                  ),
+                );
               },
             ),
           );

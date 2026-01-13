@@ -25,6 +25,8 @@ app.use(express.json());
 // Mount the Auth Router
 // This adds all routes from authRoutes.js (like /api/signup) to the app
 app.use(authRouter);
+const jobRouter = require('./routes/jobRoutes');
+app.use(jobRouter);
 
 // Root Endpoint (Sanity Check)
 // Note: We avoid conflicting with authRouter's potential routes.

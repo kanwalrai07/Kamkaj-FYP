@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/colors.dart';
+import '../../../../core/services/theme_service.dart';
 import '../../auth/services/auth_service.dart';
+import '../../jobs/services/job_service.dart';
 import 'job_detail_screen.dart';
 import 'assigned_jobs_screen.dart';
 
@@ -13,31 +15,32 @@ class WorkerHomeScreen extends StatefulWidget {
 
 class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
   final AuthService _authService = AuthService();
+  final JobService _jobService = JobService();
   bool _isOnline = false;
+  List<dynamic> _jobs = [];
+  bool _isLoading = false;
 
-  final List<Map<String, dynamic>> _dummyJobs = [
-    {
-      'title': 'Fan Installation',
-      'address': 'Johar Town, Block G',
-      'budget': 'Rs. 800',
-      'distance': '2.5 km',
-      'category': 'Electrician'
-    },
-    {
-      'title': 'Kitchen Tap Fix',
-      'address': 'Wapda Town',
-      'budget': 'Rs. 1200',
-      'distance': '4.1 km',
-      'category': 'Plumber'
-    },
-    {
-      'title': 'Wood Polish',
-      'address': 'Model Town',
-      'budget': 'Rs. 5000',
-      'distance': '6.0 km',
-      'category': 'Carpenter'
-    },
-  ];
+  Future<void> _fetchOpenJobs() async {
+    setState(() => _isLoading = true);
+    try {
+      final jobs = await _jobService.getOpenJobs();
+      if (mounted) {
+        setState(() {
+          _jobs = jobs;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error fetching open jobs: $e");
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // In a real app, you might want check online status first
+  }
 
   void _logout() {
     _authService.logout();
@@ -53,7 +56,21 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
           title: const Text('Worker Dashboard'),
           backgroundColor: AppColors.primaryYellow,
           foregroundColor: Colors.black,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              } else {
+                Navigator.pushReplacementNamed(context, '/role-selection');
+              }
+            },
+          ),
           actions: [
+            IconButton(
+              icon: Icon(Theme.of(context).brightness == Brightness.dark ? Icons.light_mode : Icons.dark_mode),
+              onPressed: () => ThemeService().toggleTheme(),
+            ),
             IconButton(
               icon: const Icon(Icons.person), 
               onPressed: () {
@@ -61,10 +78,10 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
               },
             ),
           ],
-          bottom: const TabBar(
-            labelColor: Colors.black,
-            indicatorColor: Colors.black,
-            tabs: [
+          bottom: TabBar(
+            labelColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            indicatorColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            tabs: const [
               Tab(text: "New Jobs"),
               Tab(text: "Assigned Jobs"),
             ],
@@ -96,6 +113,9 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                         onChanged: (val) {
                           setState(() {
                             _isOnline = val;
+                            if (_isOnline) {
+                              _fetchOpenJobs();
+                            }
                           });
                         },
                       ),
@@ -103,12 +123,15 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                   ),
                 ),
                 Expanded(
-                  child: _isOnline
-                      ? ListView.builder(
+                    child: _isLoading 
+                        ? const Center(child: CircularProgressIndicator())
+                        : _jobs.isEmpty 
+                              ? const Center(child: Text("No jobs available"))
+                              : ListView.builder(
                           padding: const EdgeInsets.all(16),
-                          itemCount: _dummyJobs.length,
+                          itemCount: _jobs.length,
                           itemBuilder: (context, index) {
-                            final job = _dummyJobs[index];
+                            final job = _jobs[index];
                             return Card(
                               elevation: 3,
                               margin: const EdgeInsets.only(bottom: 16),
@@ -135,10 +158,12 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                                         children: [
                                           Text(
                                             job['title'],
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
-                                              color: AppColors.secondaryBlack,
+                                              color: Theme.of(context).brightness == Brightness.dark 
+                                                  ? Colors.white 
+                                                  : AppColors.secondaryBlack,
                                             ),
                                           ),
                                           Container(
@@ -148,8 +173,13 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                             child: Text(
-                                              job['budget'],
-                                              style: const TextStyle(fontWeight: FontWeight.bold),
+                                              "Rs. ${job['budget']}",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context).brightness == Brightness.dark 
+                                                    ? Colors.white 
+                                                    : Colors.black,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -159,11 +189,12 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                                         children: [
                                           const Icon(Icons.location_on, size: 16, color: Colors.grey),
                                           const SizedBox(width: 4),
-                                          Text(job['address'], style: const TextStyle(color: Colors.grey)),
+                                          const SizedBox(width: 4),
+                                          Text(job['location'] ?? 'N/A', style: const TextStyle(color: Colors.grey)),
                                           const Spacer(),
                                           const Icon(Icons.near_me, size: 16, color: Colors.blue),
                                           const SizedBox(width: 4),
-                                          Text(job['distance'], style: const TextStyle(color: Colors.blue)),
+                                          const Text("2 km", style: TextStyle(color: Colors.blue)),
                                         ],
                                       ),
                                     ],
@@ -173,16 +204,6 @@ class _WorkerHomeScreenState extends State<WorkerHomeScreen> {
                             );
                           },
                         )
-                      : Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.offline_bolt, size: 80, color: Colors.grey),
-                              SizedBox(height: 20),
-                              Text("Go Online to receive jobs"),
-                            ],
-                          ),
-                        ),
                 ),
               ],
             ),

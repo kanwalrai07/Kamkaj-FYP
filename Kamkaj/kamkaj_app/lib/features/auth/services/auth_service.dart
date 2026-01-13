@@ -117,22 +117,15 @@ class AuthService {
 
       if (token == null) return false;
 
-      // In a real app, you would call an endpoint to verify the token
-      // e.g., await ApiService.post('/api/tokenIsValid', ...);
-      // For now, if the token exists locally, we assume it's valid for this step
-      // or we can verify it by making a dummy verified request.
-      
-      // OPTIONAL: Call backend to verify token validity
-      /*
-      final response = await ApiService.post('/api/tokenIsValid', {}, headers: {
-        'x-auth-token': token,
-      });
-      if (response.statusCode != 200) return false;
-      */
-
       return true;
     } catch (e) {
       return false;
     }
+  }
+
+  // Get Token
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('x-auth-token');
   }
 }

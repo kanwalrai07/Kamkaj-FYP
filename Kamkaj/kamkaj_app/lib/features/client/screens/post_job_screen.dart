@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/colors.dart';
+import '../../jobs/services/job_service.dart';
+import '../../jobs/services/job_service.dart';
 
 class PostJobScreen extends StatefulWidget {
-  const PostJobScreen({super.key});
+  final Map<String, dynamic>? job; 
+  const PostJobScreen({super.key, this.job});
 
   @override
   State<PostJobScreen> createState() => _PostJobScreenState();
@@ -25,28 +28,70 @@ class _PostJobScreenState extends State<PostJobScreen> {
     'Gardener',
   ];
 
-  void _postJob() {
-    if (_formKey.currentState!.validate()) {
-      // TODO: Connect to Backend API
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Posting Job... (Mock)')),
-      );
-      
-      print("Job Details:");
-      print("Category: $_selectedCategory");
-      print("Title: ${_titleController.text}");
-      print("Desc: ${_descController.text}");
-      print("Budget: ${_budgetController.text}");
-      print("Address: ${_addressController.text}");
+  final JobService _jobService = JobService();
+  bool _isLoading = false;
 
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Job Posted Successfully!')),
+  @override
+  void initState() {
+    super.initState();
+    if (widget.job != null) {
+      _titleController.text = widget.job!['title'];
+      _descController.text = widget.job!['description'] ?? '';
+      _budgetController.text = widget.job!['budget'].toString();
+      _addressController.text = widget.job!['location'];
+      _selectedCategory = widget.job!['category'];
+      
+      if (!_categories.contains(_selectedCategory) && _selectedCategory != null) {
+          _categories.add(_selectedCategory!);
+      }
+    }
+  }
+
+  Future<void> _postJob() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      
+      try {
+        final jobData = {
+          'title': _titleController.text,
+          'description': _descController.text,
+          'location': _addressController.text,
+          'category': _selectedCategory!,
+          'budget': double.parse(_budgetController.text),
+        };
+
+        if (widget.job != null) {
+           await _jobService.updateJob(widget.job!['_id'], jobData);
+           if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Job Updated Successfully!')),
+            );
+            Navigator.pop(context, true); 
+          }
+        } else {
+          await _jobService.createJob(
+            title: _titleController.text,
+            description: _descController.text,
+            location: _addressController.text,
+            category: _selectedCategory!,
+            budget: double.parse(_budgetController.text),
           );
-          Navigator.pop(context); // Go back to Home
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Job Posted Successfully!')),
+            );
+            Navigator.pop(context, true); 
+          }
         }
-      });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -54,7 +99,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Post a Job"),
+        title: Text(widget.job != null ? "Edit Job" : "Post a Job"),
         backgroundColor: AppColors.primaryYellow,
         foregroundColor: Colors.black,
       ),
@@ -159,9 +204,11 @@ class _PostJobScreenState extends State<PostJobScreen> {
                       ),
                     ),
                     onPressed: _postJob,
-                    child: const Text(
-                      "POST JOB",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    child: _isLoading 
+                        ? const Center(child: CircularProgressIndicator(color: AppColors.primaryYellow))
+                        : Text(
+                      widget.job != null ? "UPDATE JOB" : "POST JOB",
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),

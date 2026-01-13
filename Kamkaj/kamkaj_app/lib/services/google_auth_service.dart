@@ -7,6 +7,7 @@ class GoogleAuthService {
     print("googleLogin method Called");
     GoogleSignIn _googleSignIn = GoogleSignIn();
     try {
+      await _googleSignIn.signOut(); // Force account picker
       var result = await _googleSignIn.signIn();
       if (result == null) {
         return null;
@@ -27,6 +28,7 @@ class GoogleAuthService {
 
     } catch (error) {
       print("Google Sign In Error: $error");
+      print("Stack Trace: ${StackTrace.current}");
       rethrow;
     }
 

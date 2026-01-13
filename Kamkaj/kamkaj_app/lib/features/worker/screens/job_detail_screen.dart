@@ -1,17 +1,78 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/colors.dart';
+import '../../jobs/services/job_service.dart';
 
 class JobDetailScreen extends StatelessWidget {
   final Map<String, dynamic> job;
 
-  const JobDetailScreen({super.key, required this.job});
+  JobDetailScreen({super.key, required this.job});
+
+  final _bidController = TextEditingController();
+  final JobService _jobService = JobService();
 
   void _placeBid(BuildContext context) {
-    // Mock Bid Logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Bid placed successfully! Client will notify you.')),
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Place Your Bid"),
+          content: TextField(
+            controller: _bidController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: "Bid Amount (Rs.)",
+              prefixText: "Rs. ",
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryYellow),
+              onPressed: () async {
+                final amountStr = _bidController.text;
+                if (amountStr.isEmpty) return;
+
+                final amount = double.tryParse(amountStr);
+                if (amount == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter a valid amount')),
+                  );
+                  return;
+                }
+
+                try {
+                  Navigator.pop(context); // Close dialog
+                  // Show loading
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Placing bid...')),
+                  );
+
+                  await _jobService.placeBid(job['_id'], amount);
+
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Bid placed successfully!')),
+                    );
+                    Navigator.pop(context); // Close Detail Screen
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text("Submit Bid", style: TextStyle(color: Colors.black)),
+            ),
+          ],
+        );
+      },
     );
-    Navigator.pop(context);
   }
 
   @override
@@ -34,11 +95,15 @@ class JobDetailScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     job['title'],
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 24, 
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+                    ),
                   ),
                 ),
                 Text(
-                  job['budget'],
+                  "Rs. ${job['budget']}",
                   style: const TextStyle(fontSize: 20, color: Colors.green, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -50,7 +115,7 @@ class JobDetailScreen extends StatelessWidget {
               children: [
                 const Icon(Icons.location_on, color: Colors.grey),
                 const SizedBox(width: 5),
-                Expanded(child: Text(job['address'], style: const TextStyle(fontSize: 16, color: Colors.grey))),
+                Expanded(child: Text(job['location'] ?? "Unknown Location", style: const TextStyle(fontSize: 16, color: Colors.grey))),
               ],
             ),
              const SizedBox(height: 5),
@@ -64,25 +129,24 @@ class JobDetailScreen extends StatelessWidget {
             const Divider(height: 30),
 
             // Description
-            const Text(
+            Text(
               "Description",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18, 
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+              ),
             ),
             const SizedBox(height: 10),
             Text(
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Needs urgent fixing.",
-              style: const TextStyle(fontSize: 16),
+              job['description'] ?? "No description provided.",
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[300] : Colors.black87,
+              ),
             ),
             
             const Spacer(),
-
-            // TODO: Maps Integration for Route
-            Container(
-              height: 150,
-              color: Colors.grey[200],
-              child: const Center(child: Text("Map Route Preview (TODO)")),
-            ),
-            const SizedBox(height: 20),
 
             // Bid Button
             SizedBox(

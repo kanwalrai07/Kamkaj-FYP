@@ -8,8 +8,8 @@ class ApiService {
   // Physical Device: 192.168.1.7 (Your PC's IP)
   static String get baseUrl {
     if (Platform.isAndroid) {
-      // return 'http://10.0.2.2:5000'; // USE THIS FOR EMULATOR
-      return 'http://127.0.0.1:5000'; // USE THIS FOR ADB REVERSE
+      // return 'http://10.0.2.2:5000'; // FOR EMULATOR
+      return 'http://10.113.134.32:5000'; // FOR PHYSICAL DEVICE
     } else {
       return 'http://localhost:5000';
     }
@@ -33,6 +33,47 @@ class ApiService {
     } catch (e) {
       print('ApiService: Error connecting to $url'); // Debug Log
       print('ApiService: Exception details: $e'); // Debug Log
+      throw Exception('Connection failed: $e');
+    }
+  }
+
+  // Generic PUT request
+  static Future<http.Response> put(String endpoint, Map<String, dynamic> body, {Map<String, String>? headers}) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+    print('ApiService: PUT request to $url');
+    try {
+      final response = await http.put(
+        url,
+        body: jsonEncode(body),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          ...?headers,
+        },
+      ).timeout(const Duration(seconds: 10));
+      print('ApiService: Response ${response.statusCode}');
+      return response;
+    } catch (e) {
+      print('ApiService: Error connecting to $url');
+      throw Exception('Connection failed: $e');
+    }
+  }
+
+  // Generic DELETE request
+  static Future<http.Response> delete(String endpoint, {Map<String, String>? headers}) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+    print('ApiService: DELETE request to $url');
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          ...?headers,
+        },
+      ).timeout(const Duration(seconds: 10));
+      print('ApiService: Response ${response.statusCode}');
+      return response;
+    } catch (e) {
+      print('ApiService: Error connecting to $url');
       throw Exception('Connection failed: $e');
     }
   }
